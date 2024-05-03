@@ -3,9 +3,12 @@ package main
 import (
 	"io"
 	"os"
+	"sync"
 )
 
 const fileToCopy = "large.txt"
+
+var wg sync.WaitGroup
 
 func copy1() {
 	src, _ := os.ReadFile(fileToCopy)
@@ -14,12 +17,16 @@ func copy1() {
 	defer dst.Close()
 
 	dst.Write(src)
+
+	wg.Done()
 }
 
 func copy2() {
 	src, _ := os.ReadFile(fileToCopy)
 
 	os.WriteFile("copy2.txt", src, 0644)
+
+	wg.Done()
 }
 
 func copy3() {
@@ -30,6 +37,8 @@ func copy3() {
 	defer dst.Close()
 
 	io.Copy(dst, src)
+
+	wg.Done()
 }
 
 func copy4() {
@@ -48,11 +57,17 @@ func copy4() {
 
 	var buf = make([]byte, bufSize)
 	io.CopyBuffer(dst, src, buf)
+
+	wg.Done()
 }
 
 func main() {
+	wg.Add(4)
+
 	go copy1()
 	go copy2()
 	go copy3()
-	copy4()
+	go copy4()
+
+	wg.Wait()
 }
